@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Personal Finance Chatbot — IBM Powered (Frontend)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    /* ====== Base & layout ====== */
+    :root{
+      --primary:#1f77b4;  
+      --accent:#0f4c81;
+      --muted:#6b7280;
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --success:#1f9d55;
+      --danger:#e05555;
+      --glass: rgba(255,255,255,0.8);
+    }
+    *{box-sizing:border-box;font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif}
+    body{margin:0;background:linear-gradient(180deg,#eef4fb 0%,var(--bg) 100%);color:#111}
+    header{background:linear-gradient(90deg,var(--primary),var(--accent));color:white;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo {
+      width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#ffd47a,#ffbb55);font-weight:700;font-size:26px;color:#5b3410;box-shadow:0 6px 18px rgba(15,76,129,0.15);
+    }
+    header h1{margin:0;font-size:20px;letter-spacing:0.2px}
+    header p{margin:0;font-size:12px;opacity:0.95}
+    .profile {
+      display:flex;align-items:center;gap:10px;
+    }
+    .profile button{background:transparent;border:1px solid rgba(255,255,255,0.18);color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .container{display:flex;gap:20px;padding:22px;max-width:1200px;margin:20px auto}
+
+    /* ====== Sidebar ====== */
+    .sidebar{width:260px;display:flex;flex-direction:column;gap:14px}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+    .nav-btn{width:100%;text-align:left;padding:10px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-weight:600;color:var(--accent)}
+    .nav-btn:hover{background:#eef7ff}
+    .small{font-size:13px;color:var(--muted)}
+    .muted{color:var(--muted)}
+
+    /* ====== Main area ====== */
+    .main{flex:1;display:flex;flex-direction:column;gap:16px}
+    .top-actions{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .controls{display:flex;gap:10px;align-items:center}
+    .select, input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea {
+      padding:10px;border-radius:8px;border:1px solid #e6eef8;background:transparent;font-size:14px;width:100%;
+    }
+    .btn{
+      background:var(--primary);color:white;padding:9px 14px;border-radius:10px;border:none;font-weight:700;cursor:pointer;
+    }
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid #e0eefc}
+    .btn.warn{background:var(--danger)}
+
+    /* Chat */
+    .chat-area{display:flex;gap:12px;height:420px}
+    .chat-left{flex:1;display:flex;flex-direction:column;gap:12px}
+    .messages{flex:1;background:var(--card);padding:14px;border-radius:10px;overflow:auto;box-shadow:0 6px 18px rgba(16,24,40,0.04)}
+    .msg{margin-bottom:10px;display:flex;gap:8px;align-items:flex-start}
+    .msg .avatar{width:34px;height:34px;border-radius:8px;background:#eef4ff;display:inline-flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
+    .bubble{padding:10px 12px;border-radius:10px;max-width:78%;font-size:14px}
+    .bubble.bot{background:#f1f7ff;border:1px solid #e1efff;color:#0f4c81}
+    .bubble.user{background:linear-gradient(90deg,#1f77b4,#0f4c81);color:#fff;margin-left:auto}
+    .composer{display:flex;gap:8px;margin-top:8px}
+    .composer input{flex:1}
+    .composer .tool-btn{padding:10px 12px;border-radius:10px;border:1px solid #e6eef8;background:white;cursor:pointer}
+
+    /* Right panel */
+    .right-panel{width:380px;display:flex;flex-direction:column;gap:12px}
+    .section-title{font-weight:800;margin-bottom:8px}
+    .tool-card{padding:12px;border-radius:10px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid #f0f6ff}
+    .result-box{background:#fcfdff;padding:12px;border-radius:8px;border:1px solid #eef6ff;margin-top:10px;white-space:pre-wrap}
+    .hidden{display:none}
+
+    /* small screens */
+    @media (max-width:980px){
+      .container{flex-direction:column;padding:12px}
+      .sidebar{width:100%;display:flex;flex-direction:row;overflow:auto}
+      .right-panel{width:100%}
+      .chat-area{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden>💰</div>
+      <div>
+        <h1>Personal Finance Chatbot</h1>
+        <p style="opacity:0.9;font-size:13px">IBM Watson • Generative AI • Demographic-aware Financial Guidance</p>
+      </div>
+    </div>
+    <div class="profile">
+      <div id="userBadge" style="display:none">
+        <span id="uname" style="font-weight:700;color:white;margin-right:8px"></span>
+        <button class="ghost btn" onclick="openProfile()">Profile</button>
+      </div>
+      <div id="authButtons">
+        <button class="btn" onclick="openAuth('login')">Login</button>
+        <button class="btn ghost" onclick="openAuth('signup')">Signup</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:800">Welcome</div>
+            <div class="small muted" id="welcomeText">Please login to personalize</div>
+          </div>
+          <div style="text-align:right">
+            <div class="small muted">Mode</div>
+            <select id="mockMode" class="select" onchange="toggleMockMode()" style="width:120px">
+              <option value="mock">Mock (demo)</option>
+              <option value="api">Use Backend API</option>
+            </select>
+          </div>
+        </div>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid #f0f6ff" />
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="nav-btn" onclick="navTo('dashboard')">🏠 Dashboard</button>
+          <button class="nav-btn" onclick="navTo('chat')">💬 Chat</button>
+          <button class="nav-btn" onclick="navTo('budget')">📊 Budget Summary</button>
+          <button class="nav-btn" onclick="navTo('insights')">💡 Spending Insights</button>
+          <button class="nav-btn" onclick="navTo('calculators')">🧮 Calculators (EMI/SIP/SWP)</button>
+          <button class="nav-btn" onclick="navTo('profile')">👤 Profile</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:800" class="small">Demographic-aware Tone</div>
+        <div class="small muted" style="margin-top:6px">Pick user type to adapt responses</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn ghost" onclick="setDemographic('student')">Student</button>
+          <button class="btn ghost" onclick="setDemographic('professional')">Professional</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="small muted">Desired complexity</div>
+          <select id="complexity" class="select" style="margin-top:6px">
+            <option value="simple">Simple (layman)</option>
+            <option value="moderate">Balanced</option>
+            <option value="detailed">Detailed / Technical</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:800" class="small">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+          <button class="btn" onclick="requestBudget()">Generate Budget Summary</button>
+          <button class="btn ghost" onclick="requestInsights()">Get Spending Insights</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="small muted">Upload transactions (CSV)</div>
+          <input type="file" id="txFile" accept=".csv" onchange="handleCSV(event)" />
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Area -->
+    <main class="main">
+      <!-- Top area -->
+      <div class="top-actions">
+        <div>
+          <div style="font-weight:800;font-size:18px" id="pageTitle">Dashboard</div>
+          <div class="small muted" id="pageSubtitle">Personalized financial guidance at a click</div>
+        </div>
+
+        <div class="controls">
+          <div class="small muted" style="margin-right:6px">Switch Tone:</div>
+          <select id="tone" class="select" style="width:180px">
+            <option value="friendly">Friendly</option>
+            <option value="formal">Formal</option>
+            <option value="coach">Coach</option>
+          </select>
+          <button class="btn" onclick="openComposer()">Ask Chatbot</button>
+        </div>
+      </div>
+
+      <!-- Chat + Right Panel -->
+      <div class="chat-area">
+        <div class="chat-left">
+          <!-- Message area -->
+          <div id="chatWindow" class="messages card">
+            <!-- dynamic messages -->
+          </div>
+
+          <!-- Composer -->
+          <div class="composer">
+            <input id="chatInput" type="text" placeholder="Ask: 'How much should I save monthly to buy a bike in 2 years?'" />
+            <button class="tool-btn" onclick="sendChat()">Send</button>
+            <button class="tool-btn" onclick="sampleQuestion()">Example</button>
+          </div>
+        </div>
+
+        <!-- Right panel for tools & results -->
+        <aside class="right-panel">
+          <!-- Overview -->
+          <div class="card tool-card" id="dashboardCard">
+            <div class="section-title">Overview</div>
+            <div class="small muted" id="overviewText">No activity yet — try generating a budget summary or asking the chatbot.</div>
+          </div>
+
+          <!-- Budget summary -->
+          <div class="card tool-card hidden" id="budgetCard">
+            <div class="section-title">AI-Generated Budget Summary</div>
+            <div id="budgetResult" class="result-box">No budget generated yet.</div>
+          </div>
+
+          <!-- Spending insights -->
+          <div class="card tool-card hidden" id="insightsCard">
+            <div class="section-title">Spending Insights & Suggestions</div>
+            <div id="insightsResult" class="result-box">No insights yet.</div>
+          </div>
+
+          <!-- Calculator quick -->
+          <div class="card tool-card" id="calcCard">
+            <div class="section-title">Quick Calculators</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn ghost" onclick="openCalc('emi')">EMI</button>
+              <button class="btn ghost" onclick="openCalc('sip')">SIP</button>
+              <button class="btn ghost" onclick="openCalc('swp')">SWP</button>
+              <button class="btn ghost" onclick="openCalc('tax')">Tax</button>
+            </div>
+          </div>
+
+          <!-- Results container (calculators show here) -->
+          <div class="card tool-card hidden" id="calcResultCard">
+            <div class="section-title" id="calcTitle">Calculator</div>
+            <div id="calcUI"></div>
+            <div id="calcResult" class="result-box" style="margin-top:8px"></div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Footer area -->
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="small muted">⚠ Demo frontend. Implement Watson and generative AI in backend (Python/Streamlit).</div>
+        <div class="small muted">Technologies: IBM Watson • HuggingFace • Granite • Streamlit • Python</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ====== Scripts & behavior ====== -->
+  <script>
+    /****************************************************
+     * FRONTEND: Single-file demo UI for the project
+     * - Mock mode (demo) by default -> works without backend
+     * - API mode: calls secure backend endpoints (must be implemented)
+     ****************************************************/
+
+    // state
+    let state = {
+      mockMode: true,
+      user: null,
+      demographic: 'student', // student | professional
+      complexity: 'simple',
+      tone: 'friendly',
+      transactions: null // parsed CSV rows
+    };
+
+    // UI init
+    document.getElementById('complexity').value = state.complexity;
+    document.getElementById('tone').value = state.tone;
+
+    function toggleMockMode(){
+      state.mockMode = document.getElementById('mockMode').value === 'mock';
+      console.log('mockMode', state.mockMode);
+      toast(state.mockMode ? 'Running in MOCK mode' : 'Will call backend API (configure endpoints)');
+    }
+
+    function openAuth(kind){
+      // simple modal-like prompt using prompt (for demo)
+      if(kind === 'login'){
+        const email = prompt('Login - Enter email');
+        const pass = prompt('Password');
+        if(!email||!pass){ alert('Login cancelled'); return; }
+        loginApi(email,pass);
+      } else {
+        const email = prompt('Signup - Enter email');
+        const pass = prompt('Choose password');
+        if(!email||!pass){ alert('Signup cancelled'); return; }
+        signupApi(email,pass);
+      }
+    }
+
+    async function loginApi(email,password){
+      if(state.mockMode){
+        // mock authentication
+        state.user = {email:email.split('@')[0], email};
+        afterLogin();
+        toast('Logged in (mock)');
+        return;
+      }
+      // API mode - call secure backend
+      try{
+        const res = await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password})});
+        const j = await res.json();
+        if(j.ok){ state.user = j.user; afterLogin(); toast('Logged in'); }
+        else alert('Login failed: '+(j.error||'unknown'));
+      } catch(e){ alert('Network error: '+e.message) }
+    }
+
+    async function signupApi(email,password){
+      if(state.mockMode){
+        state.user = {email:email.split('@')[0], email};
+        afterLogin();
+        toast('Signed up & logged in (mock)');
+        return;
+      }
+      try{
+        const res = await fetch('/api/auth/signup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password})});
+        const j = await res.json();
+        if(j.ok){ state.user = j.user; afterLogin(); toast('Signed up'); }
+        else alert('Signup failed: '+(j.error||'unknown'));
+      } catch(e){ alert('Network error: '+e.message) }
+    }
+
+    function afterLogin(){
+      // update UI after login
+      document.getElementById('authButtons').style.display = 'none';
+      document.getElementById('userBadge').style.display = 'flex';
+      document.getElementById('uname').innerText = (state.user?.email || 'User');
+      document.getElementById('welcomeText').innerText = `Hello, ${(state.user?.email||'User')} — personalized guidance ready`;
+      navTo('chat');
+    }
+
+    function openProfile(){
+      navTo('profile');
+      // show profile info (simple)
+      document.getElementById('overviewText').innerText = `User: ${state.user?.email || 'Guest'}\nDemographic: ${state.demographic}\nComplexity: ${state.complexity}`;
+    }
+
+    function navTo(page){
+      // navigation logic: set main page title & reveal appropriate sections
+      const titleMap = {
+        dashboard:'Dashboard',
+        chat:'Chat',
+        budget:'Budget Summary',
+        insights:'Spending Insights',
+        calculators:'Calculators',
+        profile:'Profile'
+      };
+      document.getElementById('pageTitle').innerText = titleMap[page] || 'Dashboard';
+      document.getElementById('pageSubtitle').innerText = 'Personalized financial guidance';
+      // hide right panels by default
+      document.getElementById('budgetCard').classList.add('hidden');
+      document.getElementById('insightsCard').classList.add('hidden');
+      document.getElementById('calcResultCard').classList.add('hidden');
+      document.getElementById('dashboardCard').classList.remove('hidden');
+
+      if(page === 'chat') {
+        // focus chat
+        document.getElementById('chatInput').focus();
+      } else if(page === 'budget'){
+        document.getElementById('budgetCard').classList.remove('hidden');
+      } else if(page === 'insights'){
+        document.getElementById('insightsCard').classList.remove('hidden');
+      } else if(page === 'calculators'){
+        // open calculators panel
+        document.getElementById('calcResultCard').classList.remove('hidden');
+        showCalcUI('emi'); // default
+      } else if(page === 'profile'){
+        document.getElementById('dashboardCard').classList.remove('hidden');
+        document.getElementById('overviewText').innerText = `Profile\nEmail: ${state.user?.email || 'guest@example.com'}\nDemographic: ${state.demographic}\nComplexity: ${state.complexity}`;
+      } else {
+        // dashboard default
+        document.getElementById('dashboardCard').classList.remove('hidden');
+      }
+    }
+
+    // Demographic / complexity setters
+    function setDemographic(d){
+      state.demographic = d;
+      toast('Demographic set to ' + d);
+      document.getElementById('welcomeText').innerText = `Hello — ${d} mode active`;
+    }
+    document.getElementById('complexity').addEventListener('change',e=>state.complexity=e.target.value);
+    document.getElementById('tone').addEventListener('change',e=>state.tone=e.target.value);
+
+    // ====== Chat sending (uses backend or mock) ======
+    async function sendChat(){
+      const text = document.getElementById('chatInput').value.trim();
+      if(!text) return;
+      appendMessage('user', text);
+      document.getElementById('chatInput').value = '';
+      // prepare payload for backend
+      const payload = {
+        message: text,
+        profile: state.user,
+        demographic: state.demographic,
+        complexity: state.complexity,
+        tone: state.tone,
+        transactions: state.transactions || null
+      };
+      if(state.mockMode){
+        // produce a mock Watson-like reply with demographic-aware tone
+        const reply = mockReply(payload);
+        appendMessage('bot', reply);
+      } else {
+        // call backend
+        try {
+          const res = await fetch('/api/chat', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+          const j = await res.json();
+          if(j.reply) appendMessage('bot', j.reply);
+          else appendMessage('bot','(No reply)'); 
+        } catch(e){ appendMessage('bot','Network error: could not contact backend') }
+      }
+    }
+
+    function appendMessage(who, text){
+      const win = document.getElementById('chatWindow');
+      const el = document.createElement('div'); el.className='msg';
+      const avatar = document.createElement('div'); avatar.className='avatar'; avatar.innerText = who==='bot' ? 'AI' : (state.user?.email?.charAt(0)?.toUpperCase()||'U');
+      const bubble = document.createElement('div'); bubble.className='bubble ' + (who==='bot' ? 'bot' : 'user'); bubble.innerText = text;
+      el.appendChild(avatar); el.appendChild(bubble); win.appendChild(el);
+      win.scrollTop = win.scrollHeight;
+    }
+
+    function sampleQuestion(){
+      const examples = [
+        "How much should I save monthly to build an emergency fund of ₹50,000 in 1 year?",
+        "Which tax regime is better for ₹9,00,000 annual salary?",
+        "I spent ₹12,000 on food last month. How can I reduce it?",
+        "I want to buy a laptop for ₹60,000 in 2 years — how to plan SIP?"
+      ];
+      document.getElementById('chatInput').value = examples[Math.floor(Math.random()*examples.length)];
+    }
+
+    // mock reply generator (demographic-aware)
+    function mockReply(payload){
+      const userType = payload.demographic || 'student';
+      const complexity = payload.complexity || 'simple';
+      const base = (userType==='student') ? 'As a student, you might prefer concise steps. ' : 'As a professional, consider a diversified approach. ';
+      const tone = (state.tone==='friendly') ? '🙂 ' : (state.tone==='formal' ? '🔎 ' : '💡 ');
+      const core = `I recommend saving ~20% of your monthly income for core goals. `;
+      const extra = (complexity==='detailed') ? 'Here are formulas and a 3-scenario sensitivity table...' : 'Keep it simple: reduce discretionary spend by 10%.';
+      return tone + base + core + extra + '\n\n(⚠ This is a mock reply. In real mode, backend uses IBM Watson & generative AI.)';
+    }
+
+    // ====== Budget summary & Insights ======
+    async function requestBudget(){
+      if(!state.user && state.mockMode===false){ alert('Please login first'); return; }
+      // build payload
+      const payload = { profile: state.user, transactions: state.transactions, demographic: state.demographic, complexity: state.complexity };
+      if(state.mockMode){
+        // produce mock budget
+        const summary = `Monthly Income: ₹60,000
+Total Spent: ₹38,450
+Savings: ₹21,550
+Top spends: Food (₹9,200), Rent (₹12,000), Transport (₹3,400)
+Recommendation: Reduce dining out by 25% → save ₹2,300/month.`;
+        document.getElementById('budgetCard').classList.remove('hidden');
+        document.getElementById('budgetResult').innerText = summary;
+        toast('Mock budget generated');
+      } else {
+        try {
+          const res = await fetch('/api/budget',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+          const j = await res.json();
+          if(j.summary){ document.getElementById('budgetResult').innerText = j.summary; document.getElementById('budgetCard').classList.remove('hidden'); }
+          else alert('No budget returned');
+        } catch(e){ alert('API error: '+e.message) }
+      }
+    }
+
+    async function requestInsights(){
+      if(!state.user && state.mockMode===false){ alert('Please login first'); return; }
+      const payload = { profile: state.user, transactions: state.transactions, demographic: state.demographic };
+      if(state.mockMode){
+        const insights = `Insight: Your grocery spend is 18% higher than peers. Suggest switching to weekly meal plan & automated grocery list → estimated saving ₹1,500/month.
+Also set a micro-SIP of ₹500/month for emergency fund.`;
+        document.getElementById('insightsCard').classList.remove('hidden');
+        document.getElementById('insightsResult').innerText = insights;
+        toast('Mock insights ready');
+      } else {
+        try {
+          const res = await fetch('/api/insights',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+          const j = await res.json();
+          if(j.insights){ document.getElementById('insightsResult').innerText = j.insights; document.getElementById('insightsCard').classList.remove('hidden'); }
+          else alert('No insights returned');
+        } catch(e){ alert('API error: '+e.message) }
+      }
+    }
+
+    // ====== CSV parsing (very simple) ======
+    function handleCSV(evt){
+      const f = evt.target.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const text = e.target.result;
+        // very basic CSV parse: assume header date,desc,amount
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        const rows = lines.slice(1).map(l=>{
+          const cols = l.split(',');
+          return {date:cols[0], desc:cols[1], amount:parseFloat(cols[2]||0)};
+        });
+        state.transactions = rows;
+        toast('Transactions loaded: ' + rows.length);
+      };
+      reader.readAsText(f);
+    }
+
+    // ====== Calculators (show UI and call backend or mock) ======
+    function openCalc(type){ navTo('calculators'); showCalcUI(type); }
+    function showCalcUI(type){
+      document.getElementById('calcResultCard').classList.remove('hidden');
+      const ui = document.getElementById('calcUI');
+      ui.innerHTML = ''; document.getElementById('calcResult').innerText = '';
+      document.getElementById('calcTitle').innerText = type.toUpperCase() + ' Calculator';
+      if(type==='emi'){
+        ui.innerHTML = `
+          <label class="small muted">Loan amount (₹)</label><input id="emiP" type="number" value="500000" />
+          <label class="small muted">Annual rate (%)</label><input id="emiR" type="number" value="10" />
+          <label class="small muted">Tenure (months)</label><input id="emiN" type="number" value="60" />
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="calcEMI_api()">Calculate EMI</button></div>
+        `;
+      } else if(type==='sip'){
+        ui.innerHTML = `
+          <label class="small muted">Monthly SIP (₹)</label><input id="sipM" type="number" value="5000" />
+          <label class="small muted">Years</label><input id="sipY" type="number" value="10" />
+          <label class="small muted">Expected CAGR (%)</label><input id="sipR" type="number" value="12" />
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="calcSIP_api()">Calculate SIP</button></div>
+        `;
+      } else if(type==='swp'){
+        ui.innerHTML = `
+          <label class="small muted">Corpus (₹)</label><input id="swpC" type="number" value="2000000" />
+          <label class="small muted">Expected Annual Return (%)</label><input id="swpR" type="number" value="6" />
+          <label class="small muted">Monthly Withdrawal (₹)</label><input id="swpW" type="number" value="50000" />
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="calcSWP_api()">Estimate SWP</button></div>
+        `;
+      } else if(type==='tax'){
+        ui.innerHTML = `
+          <label class="small muted">Annual Income (₹)</label><input id="taxInc" type="number" value="900000" />
+          <label class="small muted">Regime</label><select id="taxReg"><option value="old">Old</option><option value="new">New</option></select>
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="calcTax_api()">Estimate Tax</button></div>
+        `;
+      }
+    }
+
+    // Calculator API wrappers
+    async function calcEMI_api(){
+      const P = Number(document.getElementById('emiP').value);
+      const rate = Number(document.getElementById('emiR').value);
+      const months = Number(document.getElementById('emiN').value);
+      if(state.mockMode){
+        // compute locally (same formula you will use server-side)
+        const r = rate / 12 / 100;
+        const emi = (P * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+        const total = emi * months;
+        const interest = total - P;
+        document.getElementById('calcResult').innerText = `EMI: ₹${emi.toFixed(2)}\nTotal Interest: ₹${interest.toFixed(2)}\nTotal Payment: ₹${total.toFixed(2)}`;
+      } else {
+        const payload = {principal:P, rate_pa:rate, months};
+        const res = await fetch('/api/calc/emi',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+        const j = await res.json();
+        document.getElementById('calcResult').innerText = JSON.stringify(j,null,2);
+      }
+    }
+
+    async function calcSIP_api(){
+      const monthly = Number(document.getElementById('sipM').value);
+      const years = Number(document.getElementById('sipY').value);
+      const cagr = Number(document.getElementById('sipR').value)/100;
+      if(state.mockMode){
+        const months = years * 12;
+        const r = cagr / 12;
+        const fv = monthly * (((Math.pow(1 + r, months) - 1) / r) * (1 + r));
+        document.getElementById('calcResult').innerText = `Future Value: ₹${fv.toFixed(2)}\nInvested: ₹${(monthly*months).toFixed(2)}`;
+      } else {
+        const payload = {monthly, years, cagr};
+        const res = await fetch('/api/calc/sip',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+        const j = await res.json();
+        document.getElementById('calcResult').innerText = JSON.stringify(j,null,2);
+      }
+    }
+
+    async function calcSWP_api(){
+      const C = Number(document.getElementById('swpC').value);
+      const rAnnual = Number(document.getElementById('swpR').value)/100;
+      const withdraw = Number(document.getElementById('swpW').value);
+      if(state.mockMode){
+        // months = ln(W / (W - C*r_month)) / ln(1 + r_month)
+        const r = rAnnual / 12;
+        if(withdraw <= C * r){ document.getElementById('calcResult').innerText = 'Withdrawal too high; corpus will not sustain.'; return; }
+        const months = Math.log(withdraw / (withdraw - C*r)) / Math.log(1 + r);
+        document.getElementById('calcResult').innerText = `Corpus lasts ~ ${(months/12).toFixed(2)} years (${Math.floor(months)} months)`;
+      } else {
+        const payload = {corpus:C,cagr:rAnnual,monthly_withdraw:withdraw};
+        const res = await fetch('/api/calc/swp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+        const j = await res.json();
+        document.getElementById('calcResult').innerText = JSON.stringify(j,null,2);
+      }
+    }
+
+    async function calcTax_api(){
+      const income = Number(document.getElementById('taxInc').value);
+      const regime = document.getElementById('taxReg').value;
+      if(state.mockMode){
+        // simplified slab example (mock)
+        let tax=0;
+        if(regime==='old'){
+          if(income>250000) tax += Math.min(income-250000,250000)*0.05;
+          if(income>500000) tax += Math.min(income-500000,500000)*0.2;
+          if(income>1000000) tax += (income-1000000)*0.3;
+        } else {
+          if(income>300000) tax += Math.min(income-300000,300000)*0.05;
+          if(income>600000) tax += Math.min(income-600000,300000)*0.1;
+          if(income>900000) tax += Math.min(income-900000,300000)*0.15;
+          if(income>1200000) tax += Math.min(income-1200000,300000)*0.2;
+          if(income>1500000) tax += Math.max(0,income-1500000)*0.3;
+        }
+        const cess = tax*0.04;
+        document.getElementById('calcResult').innerText = `Tax: ₹${tax.toFixed(2)}\nCess: ₹${cess.toFixed(2)}\nTotal: ₹${(tax+cess).toFixed(2)}`;
+      } else {
+        const payload = {income,regime};
+        const res = await fetch('/api/calc/tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+        const j = await res.json();
+        document.getElementById('calcResult').innerText = JSON.stringify(j,null,2);
+      }
+    }
+
+    // small helper
+    function toast(msg){
+      console.log('[toast]',msg);
+      // small UI hint
+      const el = document.createElement('div'); el.innerText = msg;
+      el.style.position='fixed'; el.style.right='20px'; el.style.bottom='20px'; el.style.background='rgba(15,76,129,0.95)'; el.style.color='white'; el.style.padding='10px 14px'; el.style.borderRadius='8px'; el.style.zIndex=9999;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),2200);
+    }
+
+    // openComposer placeholder (keeps previous behaviour)
+    function openComposer(){
+      navTo('chat');
+      document.getElementById('chatInput').focus();
+    }
+
+    // initial nav
+    navTo('dashboard');
+  </script>
+</body>
+</html>
